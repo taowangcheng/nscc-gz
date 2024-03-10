@@ -2,4 +2,4 @@
 
 module load anaconda3/2023.09
 source activate pytorch2
-torchrun --nnodes=2 --nproc_per_node=8 --master_addr=$1 --master_port=1234 slurm.py
+torchrun --nnodes=2 --nproc-per-node=8 --rdzv-id=1234 --rdzv-backend=c10d --rdzv-endpoint=$1:1234 slurm.py
