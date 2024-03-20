@@ -11,7 +11,7 @@ if rank == 0:
     print(f"Init")
 tensor = torch.Tensor([rank]).cuda()
 print(f"Before AllReduce: Rank {rank} has value {tensor.item()}")
-tensor_ = dist.all_reduce(tensor, op=dist.ReduceOp.SUM)
+dist.all_reduce(tensor, op=dist.ReduceOp.SUM)
 print(f"After AllReduce: Rank {rank} has value {tensor.item()}")
 
 if rank < 8:
@@ -21,9 +21,9 @@ else:
 if rank == 0:
     print(f"Reduce Test")
 test_tensor = torch.Tensor([rank]).cuda()
-print(f"Before AllReduce: Rank {rank} has value {tensor.item()}")
-test_tensor_ = dist.all_reduce(test_tensor, op=dist.ReduceOp.SUM, group=reduce_group)
-print(f"After AllReduce: Rank {rank} has value {tensor.item()}")
+print(f"Before AllReduce: Rank {rank} has value {test_tensor.item()}")
+dist.all_reduce(test_tensor, op=dist.ReduceOp.SUM, group=reduce_group)
+print(f"After AllReduce: Rank {rank} has value {test_tensor.item()}")
 
 B = 2
 S = 4096
@@ -33,8 +33,12 @@ if rank == 0:
 reduce_tensor = torch.randn(B, S, H, dtype=torch.float16).cuda()
 torch.cuda.synchronize()
 start = time.time()
-reduce_tensor_ = dist.all_reduce(reduce_tensor, op=dist.ReduceOp.SUM, group=reduce_group)
+dist.all_reduce(reduce_tensor, op=dist.ReduceOp.SUM, group=reduce_group)
 torch.cuda.synchronize()
 slot = time.time() - start
 speed = B * S * H * 2 / slot / 1024 / 1024 / 1024
 print(f"Rank {rank} Time: {slot}s Speed: {speed}GB/s")
+
+dist.barrier()
+dist.destroy_process_group(reduce_group)
+dist.destroy_process_group()
